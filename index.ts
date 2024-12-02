@@ -61,14 +61,14 @@ if (!BAD_COMMIT) {
 }
 
 try {
-  gitCommand(`cat-file -e ${GOOD_COMMIT}^{commit}`);
+  gitCommand(`cat-file -e "${GOOD_COMMIT}^{commit}"`);
 } catch {
   console.error(`Error: Good commit '${GOOD_COMMIT}' does not exist.`);
   process.exit(1);
 }
 
 try {
-  gitCommand(`cat-file -e ${BAD_COMMIT}^{commit}`);
+  gitCommand(`cat-file -e "${BAD_COMMIT}^{commit}"`);
 } catch {
   console.error(`Error: Bad commit '${BAD_COMMIT}' does not exist.`);
   process.exit(1);
