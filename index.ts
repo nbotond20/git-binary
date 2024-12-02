@@ -6,9 +6,36 @@ function gitCommand(command: string): string {
     return execSync(`git ${command}`, { encoding: 'utf8' }).trim();
   } catch (error: any) {
     console.error(`Error executing git ${command}: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 }
+
+function resetBisect() {
+  try {
+    gitCommand('bisect reset');
+    console.log('Git bisect reset.');
+  } catch (error: any) {
+    console.error(`Error resetting bisect: ${error.message}`);
+  }
+}
+
+let bisectStarted = false;
+
+process.on('exit', () => {
+  if (bisectStarted) {
+    resetBisect();
+  }
+});
+
+process.on('SIGINT', () => {
+  console.log('\nProcess interrupted.');
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error(`Uncaught exception: ${error.message}`);
+  process.exit(1);
+});
 
 try {
   gitCommand('rev-parse --is-inside-work-tree');
@@ -45,9 +72,12 @@ try {
   process.exit(1);
 }
 
-console.log(`Starting binary search between good commit ${GOOD_COMMIT} and bad commit ${BAD_COMMIT}`);
+console.log(
+  `Starting binary search between good commit ${GOOD_COMMIT} and bad commit ${BAD_COMMIT}`
+);
 
 gitCommand('bisect start');
+bisectStarted = true;
 gitCommand(`bisect bad ${BAD_COMMIT}`);
 gitCommand(`bisect good ${GOOD_COMMIT}`);
 
@@ -75,38 +105,55 @@ function promptUser(): void {
       console.log(`Bad commit: ${CURRENT_COMMIT}`);
       try {
         let REPO_URL = gitCommand('remote get-url origin');
-        REPO_URL = REPO_URL.replace(/\.git$/, '').replace(/^git:/, 'https:').replace(/^ssh:\/\/git@/, 'https://');
+        REPO_URL = REPO_URL
+          .replace(/\.git$/, '')
+          .replace(/^git:/, 'https:')
+          .replace(/^ssh:\/\/git@/, 'https://');
         console.log(`Commit link: ${REPO_URL}/commit/${CURRENT_COMMIT}`);
       } catch {
         console.log('Could not determine repository URL.');
       }
-      gitCommand('bisect reset');
       rl.close();
       process.exit(0);
     } else {
-      console.log("Invalid input. Please enter 'g' for good, 'b' for bad, or 'f' to indicate you've found the bad commit.");
+      console.log(
+        "Invalid input. Please enter 'g' for good, 'b' for bad, or 'f' to indicate you've found the bad commit."
+      );
       promptUser();
       return;
     }
 
-    const bisectLog = gitCommand('bisect log');
-    if (bisectLog.includes('first bad commit')) {
-      const BAD_COMMIT_FOUND = gitCommand('rev-parse HEAD');
-      console.log(`First bad commit identified: ${BAD_COMMIT_FOUND}`);
-      try {
-        let REPO_URL = gitCommand('remote get-url origin');
-        REPO_URL = REPO_URL.replace(/\.git$/, '').replace(/^git:/, 'https:').replace(/^ssh:\/\/git@/, 'https://');
-        console.log(`Commit link: ${REPO_URL}/commit/${BAD_COMMIT_FOUND}`);
-      } catch {
-        console.log('Could not determine repository URL.');
+    try {
+      const bisectLog = gitCommand('bisect log');
+      if (bisectLog.includes('first bad commit')) {
+        const BAD_COMMIT_FOUND = gitCommand('rev-parse HEAD');
+        console.log(`First bad commit identified: ${BAD_COMMIT_FOUND}`);
+        try {
+          let REPO_URL = gitCommand('remote get-url origin');
+          REPO_URL = REPO_URL
+            .replace(/\.git$/, '')
+            .replace(/^git:/, 'https:')
+            .replace(/^ssh:\/\/git@/, 'https://');
+          console.log(`Commit link: ${REPO_URL}/commit/${BAD_COMMIT_FOUND}`);
+        } catch {
+          console.log('Could not determine repository URL.');
+        }
+        rl.close();
+        process.exit(0);
+      } else {
+        promptUser();
       }
-      gitCommand('bisect reset');
-      rl.close();
-      process.exit(0);
-    } else {
-      promptUser();
+    } catch (error: any) {
+      console.error(`Error during bisect: ${error.message}`);
+      process.exit(1);
     }
   });
 }
 
-promptUser();
+try {
+  promptUser();
+} finally {
+  if (bisectStarted) {
+    resetBisect();
+  }
+}
