@@ -7,6 +7,9 @@
     "bin": {
         "git-binary": "dist/index.js"
     },
+    "files": [
+        "dist/**/*"
+    ],
     "scripts": {
         "build": "tsc",
         "start": "pnpm build && node dist/index.js"
