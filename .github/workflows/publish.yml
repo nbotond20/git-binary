@@ -17,7 +17,6 @@ jobs:
               with:
                   node-version: "22.x"
                   registry-url: "https://npm.pkg.github.com"
-                  scope: "@nbotond20"
 
             - name: Install pnpm 🛠️
               uses: pnpm/action-setup@v3
@@ -26,6 +25,6 @@ jobs:
                   version: 9
 
             - run: pnpm i
-            - run: npm publish
+            - run: npm publish --registry=https://npm.pkg.github.com
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
