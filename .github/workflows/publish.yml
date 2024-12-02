@@ -25,6 +25,7 @@ jobs:
                   version: 9
 
             - run: pnpm i
+            - run: pnpm build
             - run: npm publish --registry=https://npm.pkg.github.com
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
