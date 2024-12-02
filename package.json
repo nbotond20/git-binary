@@ -1,0 +1,26 @@
+{
+    "name": "git-binary",
+    "version": "0.0.1",
+    "description": "A CLI tool for git commit binary search.",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "bin": {
+        "git-binary": "dist/index.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "pnpm build && node dist/index.js"
+    },
+    "keywords": [
+        "git",
+        "binary search",
+        "cli",
+        "bisect"
+    ],
+    "author": "Nuszpl Botond",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^22.10.1",
+        "typescript": "^5.7.2"
+    }
+}
